@@ -1,6 +1,7 @@
 package game.networking;
 
 import game.Main;
+import game.models.Message;
 import game.models.Player;
 
 import java.io.IOException;
@@ -22,12 +23,9 @@ public class ServerListener extends Thread {
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
 
-            Player player = (Player) input.readObject();
-            Main.onPlayerConnected(player, output);
-
             while (socket.isConnected()) {
-                String msg = (String) input.readObject();
-                System.out.println("Message from client: " + msg);
+                Message message = (Message) input.readObject();
+                Main.onMessageReceivedFromClient(message, output);
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();

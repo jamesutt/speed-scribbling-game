@@ -2,7 +2,9 @@ package game.networking;
 
 import game.Main;
 import game.models.GameState;
+import game.models.Message;
 import game.models.Player;
+import game.models.RequestConnectionMessage;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -21,19 +23,18 @@ public class ClientListener extends Thread  {
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
 
-            Main.onConnectedToServer(output);
+            Main.setClientWriter(output);
 
-            Player player = new Player();
-            player.setIpAddress("Client's IP Address " + rand());
-            player.setName("THE CLIENT " + rand());
-            player.setId(0);
+            String name = "THE CLIENT " + rand();
+            String ip = "Client's IP Address " + rand();
+            RequestConnectionMessage requestConnectionMessage = new RequestConnectionMessage(name, ip);
 
-            output.writeObject(player);
+            output.writeObject(requestConnectionMessage);
             output.flush();
 
             while (socket.isConnected()) {
-                GameState state = (GameState) input.readObject();
-                Main.onGameStateUpdated(state);
+                Message message = (Message) input.readObject();
+                Main.onMessageReceivedFromServer(message);
             }
         } catch (Exception e) {
             e.printStackTrace();

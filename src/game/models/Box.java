@@ -19,4 +19,8 @@ public class Box implements Serializable {
     public void complete() {
         this.status = BoxStatus.FILLED;
     }
+
+    public BoxStatus getStatus() {
+        return status;
+    }
 }

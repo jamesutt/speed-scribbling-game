@@ -31,7 +31,7 @@ public class LobbyScene extends Scene {
         this.setRoot(layout);
     }
 
-    public synchronized void updateUI(GameState state) {
+    public void updateUI(GameState state) {
         Platform.runLater(() -> {
             ArrayList<Player> players = state.getPlayers();
 

@@ -1,0 +1,11 @@
+package game.models;
+
+public enum MessageType {
+    REQUEST_CONNECTION,
+    CONFIRM_CONNECTION,
+    START_GAME,
+    UPDATE_STATE,
+    REQUEST_BOX_UNLOCKED,
+    REQUEST_BOX_LOCKED,
+    REQUEST_BOX_FILLED
+}

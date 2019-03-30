@@ -23,11 +23,12 @@ public class GameSetupScene extends Scene {
         TextField configTextField = new TextField();
 
         Button createButton = new Button("Create");
-        createButton.setOnAction(e -> parent.handleCreateButtonClicked("Create Button Click"));
+        createButton.setOnAction(e -> parent.handleCreateButtonClicked());
 
         Label separatorLabel = new Label("or");
 
         Button joinButton = new Button("Join");
+        joinButton.setOnAction(e -> parent.handleJoinButtonClicked());
 
         VBox layout = new VBox(10, configTextField, createButton, separatorLabel, joinButton);
         layout.setAlignment(Pos.CENTER);

@@ -1,17 +1,24 @@
 package game.scenes;
 
 import game.Main;
-import game.views.StyledBoxView;
+import game.models.Box;
+import game.models.BoxStatus;
+import game.models.GameState;
+import game.views.BoxView;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
+
 public class GameScene extends Scene {
 
-    public GameScene(int size) {
+    ArrayList<BoxView> boxViews = new ArrayList<>();
+
+    public GameScene(int numRows) {
         super(new VBox(), 500, 500);
 
         GridPane grid = new GridPane();
@@ -19,9 +26,10 @@ public class GameScene extends Scene {
         grid.setVgap(5);
         grid.setStyle("-fx-padding: 10;");
 
-        for (int row = 0; row < size; row++) {
-            for (int column = 0; column < size; column++) {
-                StyledBoxView boxView = new StyledBoxView(50, 50, 10, Color.RED, 50);
+        for (int row = 0; row < numRows; row++) {
+            for (int column = 0; column < numRows; column++) {
+                BoxView boxView = new BoxView(row, column);
+                boxViews.add(boxView);
                 grid.add(boxView, row, column);
             }
         }
@@ -32,4 +40,30 @@ public class GameScene extends Scene {
 
         this.setRoot(layout);
     }
+
+    public void updateUI(GameState state) {
+        Platform.runLater(() -> {
+            ArrayList<Box> boxes = state.getBoxes();
+            for (int i = 0; i < boxes.size(); i++) {
+                Box box = boxes.get(i);
+                BoxStatus boxStatus = box.getStatus();
+                int boxOwnerId = box.getOwnerId();
+                Color boxColor = box.getColor();
+                int currentPlayerId = Main.getCurrentPlayer().getId();
+
+                if (boxStatus.equals(BoxStatus.FREE)) {
+                    boxViews.get(i).reset();
+                }
+
+                if (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId != currentPlayerId) {
+                    boxViews.get(i).reserve(boxColor);
+                }
+
+                if (boxStatus.equals(BoxStatus.FILLED) && boxOwnerId != currentPlayerId) {
+                    boxViews.get(i).forceFill(boxColor);
+                }
+            }
+        });
+    }
+
 }

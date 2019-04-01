@@ -14,9 +14,10 @@ import java.util.ArrayList;
 
 public class LobbyScene extends Scene {
 
-    Label playerLabel1 = new Label("Bot 1");
-    Label playerLabel2 = new Label("Bot 2");
-    Label playerLabel3 = new Label("Bot 3");
+    Label playerLabel1 = new Label("");
+    Label playerLabel2 = new Label("");
+    Label playerLabel3 = new Label("");
+    Label playerLabel4 = new Label("");
 
     public LobbyScene() {
         super(new VBox(), 500, 500);
@@ -26,7 +27,7 @@ public class LobbyScene extends Scene {
 
         VBox layout = new VBox(30);
         layout.setAlignment(Pos.CENTER);
-        layout.getChildren().addAll(playerLabel1, playerLabel2, playerLabel3, startButton);
+        layout.getChildren().addAll(playerLabel1, playerLabel2, playerLabel3, playerLabel4, startButton);
 
         this.setRoot(layout);
     }
@@ -35,9 +36,10 @@ public class LobbyScene extends Scene {
         Platform.runLater(() -> {
             ArrayList<Player> players = state.getPlayers();
 
-            playerLabel1.setText(players.size() > 0 ? players.get(0).getName() : "Bot 1");
-            playerLabel2.setText(players.size() > 1 ? players.get(1).getName() : "Bot 2");
-            playerLabel3.setText(players.size() > 2 ? players.get(2).getName() : "Bot 3");
+            playerLabel1.setText(players.size() > 0 ? players.get(0).getName() : "");
+            playerLabel2.setText(players.size() > 1 ? players.get(1).getName() : "");
+            playerLabel3.setText(players.size() > 2 ? players.get(2).getName() : "");
+            playerLabel4.setText(players.size() > 3 ? players.get(3).getName() : "");
         });
     }
 }

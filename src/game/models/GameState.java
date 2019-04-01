@@ -6,11 +6,11 @@ import java.util.ArrayList;
 public class GameState implements Serializable {
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Box> boxes = new ArrayList<>();
-    private int size;
+    private int numRows;
 
-    public GameState(int size) {
-        this.size = size;
-        for (int i = 0; i < size; i++) {
+    public GameState(int numRows) {
+        this.numRows = numRows;
+        for (int i = 0; i < numRows * numRows; i++) {
             boxes.add(new Box());
         }
     }
@@ -24,15 +24,15 @@ public class GameState implements Serializable {
         boxes.get(index).reset();
     }
 
-    public void drawBox(int row, int column, int ownerId) {
+    public void reserveBox(int row, int column, int ownerId, String color) {
         int index = toIndex(row, column);
-        boxes.get(index).draw(ownerId);
+        boxes.get(index).reserve(ownerId, color);
     }
 
-    public void completeBox(int row, int column, int ownerId) {
+    public void fillBox(int row, int column, int ownerId, String color) {
         int index = toIndex(row, column);
-        boxes.get(index).draw(ownerId);
-        boxes.get(index).complete();
+        boxes.get(index).reserve(ownerId, color);
+        boxes.get(index).fill();
     }
 
     public Box getBox(int row, int column) {
@@ -45,7 +45,7 @@ public class GameState implements Serializable {
     }
 
     private int toIndex(int row, int column) {
-        return row * size + column;
+        return row * numRows + column;
     }
 
     public ArrayList<Player> getPlayers() {

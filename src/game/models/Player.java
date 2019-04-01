@@ -1,15 +1,16 @@
 package game.models;
 
-import java.awt.*;
+import javafx.scene.paint.Color;
+
 import java.io.Serializable;
 
 public class Player implements Serializable {
     private int id;
     private String name;
     private String ip;
-    private Color color;
+    private String color;
 
-    public Player(int id, String name, String ip, Color color) {
+    public Player(int id, String name, String ip, String color) {
         this.id = id;
         this.name = name;
         this.ip = ip;
@@ -32,4 +33,11 @@ public class Player implements Serializable {
         this.name = name;
     }
 
+    public Color getColor() {
+        return Color.web(color);
+    }
+
+    public String getColorString() {
+        return color;
+    }
 }

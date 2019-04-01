@@ -10,7 +10,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -27,13 +26,13 @@ enum SCENE {
 public class Main extends Application {
 
     // Constants
-    private static final int NUM_CLIENTS = 2;
-    public static final int size = 4;
+    private static final int NUM_CLIENTS = 3;
+    public static final int NUM_ROWS = 4;
     public static final String HOSTNAME = "localhost";
     public static final int PORT = 8888;
-    private static final List<Color> COLORS = Arrays.asList(Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN);
+    private static final List<String> COLORS = Arrays.asList("#ff6961", "#aec6cf", "#77dd77", "#fcd670");
 
-    // Shared
+    // Shared variables
     private static Stage stage;
     private static GameState state;
     private static boolean isServer;
@@ -42,18 +41,28 @@ public class Main extends Application {
     private static SCENE currentScene;
     private static Player currentPlayer;
 
-    // Server
-    private static HashSet<ObjectOutputStream> writers = new HashSet<>();
+    // Server variables
+    private static HashSet<ObjectOutputStream> serverWriters = new HashSet<>();
     private static int nextPlayerId = 0;
 
-    // Client
+    // Client variables
     private static ObjectOutputStream clientWriter;
+
+    // Getters
+    public synchronized static GameState getState() {
+        return state;
+    }
+    public synchronized static Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    // Shared methods
 
     @Override
     public void start(Stage primaryStage) {
         stage = primaryStage;
 
-        state = new GameState(size);
+        state = new GameState(NUM_ROWS);
 
         MenuScene menuScene = new MenuScene();
 
@@ -101,11 +110,13 @@ public class Main extends Application {
         new ClientListener().start();
     }
 
+    // Server methods
+
     private static synchronized void addHostAsPlayer() {
         String name = "THE HOST";
         String ip = "Host's IP Address";
         int id = nextPlayerId;
-        Color color = COLORS.get(id);
+        String color = COLORS.get(id);
 
         nextPlayerId++;
 
@@ -114,17 +125,17 @@ public class Main extends Application {
         state.addPlayer(player);
 
         lobbyScene.updateUI(Main.state);
-        sendStateToClients();
+        broadcastState();
     }
 
-    private static synchronized void sendStateToClients() {
+    private static synchronized void broadcastState() {
         UpdateStateMessage message = new UpdateStateMessage(state);
-        sendMessageToClients(message);
+        broadcastMessage(message);
     }
 
-    private static synchronized void sendMessageToClients(Message message) {
+    private static synchronized void broadcastMessage(Message message) {
         try {
-            for (ObjectOutputStream writer: writers) {
+            for (ObjectOutputStream writer: serverWriters) {
                 writer.writeObject(message);
                 writer.reset();
             }
@@ -135,28 +146,28 @@ public class Main extends Application {
 
     public static synchronized void onStartClicked() {
         if (isServer) {
-            gameScene = new GameScene(size);
+            gameScene = new GameScene(NUM_ROWS);
             currentScene = SCENE.GAME;
             stage.setScene(gameScene);
 
             StartGameMessage startGameMessage = new StartGameMessage();
-            sendMessageToClients(startGameMessage);
+            broadcastMessage(startGameMessage);
         }
     }
 
     public static synchronized void onMessageReceivedFromClient(Message message, ObjectOutputStream writer) {
         switch (message.getType()) {
-            case REQUEST_CONNECTION:
+            case REQUEST_CONNECTION: {
                 RequestConnectionMessage requestConnectionMessage = (RequestConnectionMessage) message;
                 String name = requestConnectionMessage.getName();
                 String ip = requestConnectionMessage.getIp();
                 int id = nextPlayerId;
 
-                Color color = COLORS.get(id);
+                String color = COLORS.get(id);
 
                 Player player = new Player(id, name, ip, color);
                 state.addPlayer(player);
-                writers.add(writer);
+                serverWriters.add(writer);
 
                 try {
                     ConfirmConnectionMessage confirmConnectionMessage = new ConfirmConnectionMessage(player);
@@ -166,14 +177,66 @@ public class Main extends Application {
                 }
 
                 lobbyScene.updateUI(Main.state);
-                sendStateToClients();
+                broadcastState();
                 nextPlayerId++;
                 break;
+            }
+            case REQUEST_BOX_RESET: {
+                // TODO: Might need to check if box is free
+                RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
+                int requestBoxRow = requestBoxResetMessage.getRow();
+                int requestBoxColumn = requestBoxResetMessage.getColumn();
+
+                state.resetBox(requestBoxRow, requestBoxColumn);
+                gameScene.updateUI(Main.state);
+                broadcastState();
+
+                break;
+            }
+            case REQUEST_BOX_FILLED: {
+                RequestBoxFilledMessage requestBoxFilledMessage = (RequestBoxFilledMessage) message;
+                int requestBoxRow = requestBoxFilledMessage.getRow();
+                int requestBoxColumn = requestBoxFilledMessage.getColumn();
+                int requestOwnerId = requestBoxFilledMessage.getOwnerId();
+                String requestBoxColorString = requestBoxFilledMessage.getBoxColorString();
+
+                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+                int boxOwnerId = box.getOwnerId();
+                BoxStatus boxStatus = box.getStatus();
+
+                if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId == requestOwnerId)) {
+                    state.fillBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                    gameScene.updateUI(Main.state);
+                    broadcastState();
+                }
+
+                break;
+            }
+            case REQUEST_BOX_RESERVED: {
+                RequestBoxReservedMessage requestBoxReservedMessage = (RequestBoxReservedMessage) message;
+                int requestBoxRow = requestBoxReservedMessage.getRow();
+                int requestBoxColumn = requestBoxReservedMessage.getColumn();
+                int requestOwnerId = requestBoxReservedMessage.getOwnerId();
+                String requestBoxColorString = requestBoxReservedMessage.getBoxColorString();
+
+                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+                int boxOwnerId = box.getOwnerId();
+                BoxStatus boxStatus = box.getStatus();
+
+                if (boxStatus.equals(BoxStatus.FREE)) {
+                    state.reserveBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                    gameScene.updateUI(Main.state);
+                    broadcastState();
+                }
+
+                break;
+            }
         }
     }
 
 
-    // Client
+    // Client methods
+
     public static synchronized void setClientWriter(ObjectOutputStream writer) {
         clientWriter = writer;
     }
@@ -186,7 +249,7 @@ public class Main extends Application {
                 currentPlayer = player;
                 break;
             case START_GAME:
-                gameScene = new GameScene(size);
+                gameScene = new GameScene(NUM_ROWS);
                 currentScene = SCENE.GAME;
 
                 Platform.runLater(() -> {
@@ -206,5 +269,48 @@ public class Main extends Application {
         }
     }
 
+    // Shared methods
+
+    public static synchronized void onBoxReset(int row, int column) {
+        if (isServer) {
+            state.resetBox(row, column);
+            broadcastState();
+        } else {
+            try {
+                RequestBoxResetMessage requestBoxResetMessage = new RequestBoxResetMessage(row, column);
+                clientWriter.writeObject(requestBoxResetMessage);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public static synchronized void onBoxReserved(int row, int column) {
+        if (isServer) {
+            state.reserveBox(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+            broadcastState();
+        } else {
+            try {
+                RequestBoxReservedMessage requestBoxReservedMessage = new RequestBoxReservedMessage(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+                clientWriter.writeObject(requestBoxReservedMessage);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static synchronized void onBoxFilled(int row, int column) {
+        if (isServer) {
+            state.fillBox(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+            broadcastState();
+        } else {
+            try {
+                RequestBoxFilledMessage requestBoxFilledMessage = new RequestBoxFilledMessage(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+                clientWriter.writeObject(requestBoxFilledMessage);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

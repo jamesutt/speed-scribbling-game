@@ -2,6 +2,6 @@ package game.models;
 
 public enum BoxStatus {
     FREE,
-    TAKEN,
+    RESERVED,
     FILLED
 }

@@ -7,6 +7,7 @@ import game.networking.ServerListener;
 import game.scenes.GameScene;
 import game.scenes.LobbyScene;
 import game.scenes.MenuScene;
+import game.scenes.ReconnectingScene;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -38,7 +39,11 @@ public class Main extends Application {
 
     // Server variables
     private static HashSet<ObjectOutputStream> serverWriters = new HashSet<>(); // For sending messages to clients
-    private static int nextPlayerId = 0;
+    private static int nextPlayerId = 0; // Don't need to pass this to new server as no new players can join after the game has started
+
+    // For client that becomes server
+    private static int expectedClientCount;
+    private static int clientCount;
 
     // Client variables
     private static ObjectOutputStream clientWriter; // For sending messages to the server
@@ -51,7 +56,9 @@ public class Main extends Application {
         return currentPlayer;
     }
 
-    // Shared methods
+    /**
+     * Shared methods
+     */
 
     @Override
     public void start(Stage primaryStage) {
@@ -79,17 +86,21 @@ public class Main extends Application {
 
         addHostAsPlayer();
 
+        listenForClients(NUM_CLIENTS);
+    }
+
+    private static void listenForClients(int numClients) {
         Thread wait = new Thread(() -> {
             try {
                 int count = 0;
                 ServerSocket server = new ServerSocket(PORT);
 
-                while (count < NUM_CLIENTS) {
+                while (count < numClients) {
                     new ServerListener(server.accept()).start();
                     count++;
                 }
             } catch (Exception e) {
-                 e.printStackTrace();
+                e.printStackTrace();
             }
         });
         wait.setDaemon(true);
@@ -102,10 +113,12 @@ public class Main extends Application {
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
 
-        new ClientListener().start();
+        new ClientListener(true).start();
     }
 
-    // Server methods
+    /**
+     * Server methods
+     */
 
     private static synchronized void addHostAsPlayer() {
         String name = "THE HOST";
@@ -226,11 +239,31 @@ public class Main extends Application {
 
                 break;
             }
+            case RECONNECT: {
+                // TODO: handle a case when there's only one player remaining
+                clientCount++;
+                serverWriters.add(writer);
+
+                broadcastState();
+
+                if (clientCount == expectedClientCount) {
+                    currentScene = Scene.GAME;
+
+                    Platform.runLater(() -> {
+                        stage.setScene(gameScene);
+                    });
+
+                    ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
+                    broadcastMessage(resumeGameMessage);
+                }
+            }
         }
     }
 
 
-    // Client methods
+    /**
+     * Client methods
+     */
 
     public static synchronized void setClientWriter(ObjectOutputStream writer) {
         clientWriter = writer;
@@ -238,12 +271,13 @@ public class Main extends Application {
 
     public static synchronized void onMessageReceivedFromServer(Message message) {
         switch (message.getType()) {
-            case CONFIRM_CONNECTION:
+            case CONFIRM_CONNECTION: {
                 ConfirmConnectionMessage confirmConnectionMessage = (ConfirmConnectionMessage) message;
                 Player player = confirmConnectionMessage.getPlayer();
                 currentPlayer = player;
                 break;
-            case START_GAME:
+            }
+            case START_GAME: {
                 gameScene = new GameScene(NUM_ROWS);
                 currentScene = Scene.GAME;
 
@@ -251,7 +285,18 @@ public class Main extends Application {
                     stage.setScene(gameScene);
                 });
                 break;
-            case UPDATE_STATE:
+            }
+            case RESUME_GAME: {
+                currentScene = Scene.GAME;
+                gameScene.updateUI(Main.state);
+
+                Platform.runLater(() -> {
+                    stage.setScene(gameScene);
+                });
+
+                break;
+            }
+            case UPDATE_STATE: {
                 UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
                 Main.state = updateStateMessage.getState();
 
@@ -261,10 +306,40 @@ public class Main extends Application {
                     gameScene.updateUI(Main.state);
                 }
                 break;
+            }
         }
     }
 
-    // Shared methods
+    // TODO: handle a case when a client disconnects
+
+    public static void onServerDisconnected() {
+        // Switch to Reconnecting scene
+        ReconnectingScene reconnectingScene = new ReconnectingScene();
+        currentScene = Scene.RECONNECTING;
+
+        Platform.runLater(() -> {
+            stage.setScene(reconnectingScene);
+        });
+
+        int previousHostId = state.getPlayers().get(0).getId();
+        int currentPlayerId = currentPlayer.getId();
+
+        // If the current player is the second in the player list, then become the server
+        if (previousHostId + 1 == currentPlayerId) {
+            state.getPlayers().remove(0); // Remove previous host from players
+            isServer = true;
+            expectedClientCount = state.getPlayers().size() - 1;
+            clientCount = 0;
+            listenForClients(expectedClientCount);
+        } else {
+            // Other clients wait for new server to setup
+            new ClientListener(false).start();
+        }
+    }
+
+    /**
+     * Shared methods
+     */
 
     // Gets called by a BoxView when the user cancels drawing the box
     public static synchronized void onBoxReset(int row, int column) {

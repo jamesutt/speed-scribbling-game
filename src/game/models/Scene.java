@@ -4,4 +4,5 @@ public enum Scene {
     LOGIN,
     LOBBY,
     GAME,
+    RECONNECTING
 }

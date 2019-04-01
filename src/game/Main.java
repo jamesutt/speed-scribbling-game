@@ -1,6 +1,7 @@
 package game;
 
 import game.models.*;
+import game.models.messages.*;
 import game.networking.ClientListener;
 import game.networking.ServerListener;
 import game.scenes.GameScene;
@@ -17,12 +18,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-enum SCENE {
-    LOGIN,
-    LOBBY,
-    GAME,
-}
-
 public class Main extends Application {
 
     // Constants
@@ -38,7 +33,7 @@ public class Main extends Application {
     private static boolean isServer;
     private static LobbyScene lobbyScene;
     private static GameScene gameScene;
-    private static SCENE currentScene;
+    private static Scene currentScene;
     private static Player currentPlayer;
 
     // Server variables
@@ -66,7 +61,7 @@ public class Main extends Application {
 
         MenuScene menuScene = new MenuScene();
 
-        currentScene = SCENE.LOGIN;
+        currentScene = Scene.LOGIN;
         stage.setScene(menuScene);
         stage.setTitle("Menu");
         stage.show();
@@ -80,7 +75,7 @@ public class Main extends Application {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
-        currentScene = SCENE.LOBBY;
+        currentScene = Scene.LOBBY;
 
         addHostAsPlayer();
 
@@ -105,7 +100,7 @@ public class Main extends Application {
         isServer = false;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
-        currentScene = SCENE.LOBBY;
+        currentScene = Scene.LOBBY;
 
         new ClientListener().start();
     }
@@ -147,7 +142,7 @@ public class Main extends Application {
     public static synchronized void onStartClicked() {
         if (isServer) {
             gameScene = new GameScene(NUM_ROWS);
-            currentScene = SCENE.GAME;
+            currentScene = Scene.GAME;
             stage.setScene(gameScene);
 
             StartGameMessage startGameMessage = new StartGameMessage();
@@ -250,7 +245,7 @@ public class Main extends Application {
                 break;
             case START_GAME:
                 gameScene = new GameScene(NUM_ROWS);
-                currentScene = SCENE.GAME;
+                currentScene = Scene.GAME;
 
                 Platform.runLater(() -> {
                     stage.setScene(gameScene);
@@ -260,9 +255,9 @@ public class Main extends Application {
                 UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
                 Main.state = updateStateMessage.getState();
 
-                if (currentScene.equals(SCENE.LOBBY)) {
+                if (currentScene.equals(Scene.LOBBY)) {
                     lobbyScene.updateUI(Main.state);
-                } else if (currentScene.equals(SCENE.GAME)) {
+                } else if (currentScene.equals(Scene.GAME)) {
                     gameScene.updateUI(Main.state);
                 }
                 break;

@@ -1,4 +1,4 @@
-package game.models;
+package game.models.messages;
 
 public enum MessageType {
     REQUEST_CONNECTION,

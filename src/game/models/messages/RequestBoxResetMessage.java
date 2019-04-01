@@ -1,4 +1,4 @@
-package game.models;
+package game.models.messages;
 
 public class RequestBoxResetMessage extends Message {
     private int row;

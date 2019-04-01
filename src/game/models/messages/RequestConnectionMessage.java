@@ -1,6 +1,4 @@
-package game.models;
-
-import java.io.Serializable;
+package game.models.messages;
 
 public class RequestConnectionMessage extends Message {
     private String name;

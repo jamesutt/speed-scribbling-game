@@ -1,4 +1,6 @@
-package game.models;
+package game.models.messages;
+
+import game.models.GameState;
 
 public class UpdateStateMessage extends Message {
     private GameState state;

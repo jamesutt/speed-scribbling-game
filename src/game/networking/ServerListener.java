@@ -1,8 +1,7 @@
 package game.networking;
 
 import game.Main;
-import game.models.Message;
-import game.models.Player;
+import game.models.messages.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

@@ -1,4 +1,4 @@
-package game.models;
+package game.models.messages;
 
 import java.io.Serializable;
 

@@ -1,4 +1,4 @@
-package game.models;
+package game.models.messages;
 
 public class RequestBoxReservedMessage extends Message {
     private int row;

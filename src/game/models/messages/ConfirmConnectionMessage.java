@@ -1,4 +1,6 @@
-package game.models;
+package game.models.messages;
+
+import game.models.Player;
 
 public class ConfirmConnectionMessage extends Message {
     private Player player;

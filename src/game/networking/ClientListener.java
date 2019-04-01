@@ -1,15 +1,12 @@
 package game.networking;
 
 import game.Main;
-import game.models.GameState;
-import game.models.Message;
-import game.models.Player;
-import game.models.RequestConnectionMessage;
+import game.models.messages.Message;
+import game.models.messages.RequestConnectionMessage;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class ClientListener extends Thread  {

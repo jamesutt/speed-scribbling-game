@@ -37,11 +37,11 @@ public class Main extends Application {
     private static Player currentPlayer;
 
     // Server variables
-    private static HashSet<ObjectOutputStream> serverWriters = new HashSet<>();
+    private static HashSet<ObjectOutputStream> serverWriters = new HashSet<>(); // For sending messages to clients
     private static int nextPlayerId = 0;
 
     // Client variables
-    private static ObjectOutputStream clientWriter;
+    private static ObjectOutputStream clientWriter; // For sending messages to the server
 
     // Getters
     public synchronized static GameState getState() {
@@ -266,6 +266,7 @@ public class Main extends Application {
 
     // Shared methods
 
+    // Gets called by a BoxView when the user cancels drawing the box
     public static synchronized void onBoxReset(int row, int column) {
         if (isServer) {
             state.resetBox(row, column);
@@ -280,7 +281,7 @@ public class Main extends Application {
         }
     }
 
-
+    // Gets called by a BoxView when the box has been drawn
     public static synchronized void onBoxReserved(int row, int column) {
         if (isServer) {
             state.reserveBox(row, column, currentPlayer.getId(), currentPlayer.getColorString());
@@ -295,6 +296,7 @@ public class Main extends Application {
         }
     }
 
+    // Gets called by a BoxView when the box is filled
     public static synchronized void onBoxFilled(int row, int column) {
         if (isServer) {
             state.fillBox(row, column, currentPlayer.getId(), currentPlayer.getColorString());

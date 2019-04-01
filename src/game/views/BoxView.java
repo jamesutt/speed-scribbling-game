@@ -56,6 +56,8 @@ public class BoxView extends StackPane {
 
     private synchronized void onMousePressed(MouseEvent e) {
         BoxStatus boxStatus = Main.getState().getBox(row, column).getStatus();
+
+        // If the box is free
         if (boxStatus.equals(BoxStatus.FREE)) {
             drawing = true;
             double x = e.getX();
@@ -71,10 +73,12 @@ public class BoxView extends StackPane {
         int ownerId = box.getOwnerId();
         BoxStatus boxStatus = box.getStatus();
 
+        // If the box is free or reserved by current player
         if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && ownerId == currentPlayerId)) {
             double x = e.getX();
             double y = e.getY();
 
+            // If previous and current cursor positions are within the box
             if (drawing && previousX > -1 && previousY > -1 && x > 0 && x < boxWidth && y > 0 && y < boxHeight) {
                 draw(previousX, previousY, x, y, currentPlayerColor);
             }
@@ -88,6 +92,7 @@ public class BoxView extends StackPane {
         int ownerId = box.getOwnerId();
         BoxStatus boxStatus = box.getStatus();
 
+        // If the box is free or reserved by current player
         if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && ownerId == currentPlayerId)) {
             if (drawing) {
                 drawing = false;
@@ -115,22 +120,26 @@ public class BoxView extends StackPane {
         previousY = y2;
     }
 
+    // Fills the box with given color
     private void fill(Color color) {
         gc.setFill(color);
         gc.fillRect(0, 0, boxWidth, boxHeight);
     }
 
+    // Fills the box with white color
     public void reset() {
         gc.setFill(whiteColor);
         gc.fillRect(0, 0, boxWidth, boxHeight);
     }
 
+    // Puts a cross in the box indicating it's being drawn by some other player
     public void reserve(Color color) {
         gc.setStroke(color);
         gc.strokeLine(0, 0, boxWidth, boxHeight);
         gc.strokeLine(0, boxHeight, boxWidth, 0);
     }
 
+    // Forces the current player to stop drawing and fills the box with given color
     public void forceFill(Color color) {
         gc.setFill(color);
         gc.fillRect(0, 0, boxWidth, boxHeight);
@@ -140,6 +149,8 @@ public class BoxView extends StackPane {
         previousY = -1;
     }
 
+    // Calculates percentage of non-white pixels in the box
+    // Returns 0 to 100
     private double getCurrentPercentage() {
         WritableImage image = this.snapshot(new SnapshotParameters(), null);
         PixelReader reader = image.getPixelReader();

@@ -68,16 +68,6 @@ public class Main extends Application {
 
         MenuScene menuScene = new MenuScene();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
-
-                try {
-                    clientWriter.writeObject(resumeGameMessage);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-        }));
-
         currentScene = Scene.LOGIN;
         stage.setScene(menuScene);
         stage.setTitle("Menu");
@@ -266,9 +256,6 @@ public class Main extends Application {
                     ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
                     broadcastMessage(resumeGameMessage);
                 }
-            }
-            case RESUME_GAME: {
-                System.out.println("Client has disconnected");
             }
         }
     }

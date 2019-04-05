@@ -19,6 +19,7 @@ public class ClientListener extends Thread  {
     private ObjectInputStream input;
     private ObjectOutputStream output;
     private boolean newConnection;
+    private String serverIp;
 
     public ClientListener(boolean newConnection, String serverIp) {
         this.newConnection = newConnection;
@@ -31,7 +32,7 @@ public class ClientListener extends Thread  {
                 Thread.sleep(1000);
             }
 
-            socket = new Socket(Main.HOSTNAME, Main.PORT);
+            socket = new Socket(serverIp, Main.PORT);
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
 

@@ -22,7 +22,9 @@ public class ClientListener extends Thread  {
     private String serverIp;
 
     public ClientListener(boolean newConnection, String serverIp) {
+
         this.newConnection = newConnection;
+        this.serverIp = serverIp;
     }
 
     public void run() {

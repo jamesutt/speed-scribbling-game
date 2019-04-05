@@ -10,6 +10,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Random;
 
@@ -19,7 +20,7 @@ public class ClientListener extends Thread  {
     private ObjectOutputStream output;
     private boolean newConnection;
 
-    public ClientListener(boolean newConnection) {
+    public ClientListener(boolean newConnection, String serverIp) {
         this.newConnection = newConnection;
     }
 
@@ -38,7 +39,7 @@ public class ClientListener extends Thread  {
 
             if (newConnection) {
                 String name = "THE CLIENT " + rand();
-                String ip = "Client's IP Address " + rand();
+                String ip = InetAddress.getLocalHost().getHostAddress();
                 RequestConnectionMessage requestConnectionMessage = new RequestConnectionMessage(name, ip);
 
                 output.writeObject(requestConnectionMessage);

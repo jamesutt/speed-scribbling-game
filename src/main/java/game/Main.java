@@ -113,7 +113,7 @@ public class Main extends Application {
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
 
-        new ClientListener(true).start();
+        new ClientListener(true, HOSTNAME).start();
     }
 
     /**
@@ -333,7 +333,7 @@ public class Main extends Application {
             listenForClients(expectedClientCount);
         } else {
             // Other clients wait for new server to setup
-            new ClientListener(false).start();
+            new ClientListener(false, state.getPlayers().get(1).getIp()).start();
         }
     }
 

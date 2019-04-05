@@ -7,3 +7,5 @@ src/enums/
 src/services/
 src/views/
 target/
+.classpath
+bin/

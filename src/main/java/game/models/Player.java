@@ -40,4 +40,8 @@ public class Player implements Serializable {
     public String getColorString() {
         return color;
     }
+
+    public String getIp() {
+        return ip;
+    }
 }

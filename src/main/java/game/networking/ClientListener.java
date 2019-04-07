@@ -19,11 +19,12 @@ public class ClientListener extends Thread  {
     private ObjectInputStream input;
     private ObjectOutputStream output;
     private boolean newConnection;
+    private String name;
     private String serverIp;
 
-    public ClientListener(boolean newConnection, String serverIp) {
-
+    public ClientListener(boolean newConnection, String name, String serverIp) {
         this.newConnection = newConnection;
+        this.name = name;
         this.serverIp = serverIp;
     }
 
@@ -41,8 +42,7 @@ public class ClientListener extends Thread  {
             Main.setClientWriter(output);
 
             if (newConnection) {
-                String name = "THE CLIENT " + rand();
-                String ip = InetAddress.getLocalHost().getHostAddress();
+                String ip = Main.MY_IP_ADDRESS;
                 RequestConnectionMessage requestConnectionMessage = new RequestConnectionMessage(name, ip);
 
                 output.writeObject(requestConnectionMessage);
@@ -73,10 +73,5 @@ public class ClientListener extends Thread  {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private int rand() {
-        Random random = new Random();
-        return random.nextInt(100);
     }
 }

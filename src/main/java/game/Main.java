@@ -14,7 +14,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -22,16 +24,15 @@ import java.util.List;
 public class Main extends Application {
 
     // Constants
-    private static final int NUM_CLIENTS = 3;
     public static final int NUM_ROWS = 4;
-    public static final String HOSTNAME = "localhost";
     public static final int PORT = 8888;
+    public static String MY_IP_ADDRESS = "";
     private static final List<String> COLORS = Arrays.asList("#ff6961", "#aec6cf", "#77dd77", "#fcd670");
 
     // Shared variables
     private static Stage stage;
     private static GameState state;
-    private static boolean isServer;
+    public static boolean isServer;
     private static LobbyScene lobbyScene;
     private static GameScene gameScene;
     private static Scene currentScene;
@@ -66,6 +67,12 @@ public class Main extends Application {
 
         state = new GameState(NUM_ROWS);
 
+        try {
+            MY_IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
         MenuScene menuScene = new MenuScene();
 
         currentScene = Scene.LOGIN;
@@ -78,15 +85,15 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void onServerClicked() {
+    public static void onServerClicked(String name, int numPlayers) {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
 
-        addHostAsPlayer();
+        addHostAsPlayer(name);
 
-        listenForClients(NUM_CLIENTS);
+        listenForClients(numPlayers - 1);
     }
 
     private static void listenForClients(int numClients) {
@@ -107,22 +114,21 @@ public class Main extends Application {
         wait.start();
     }
 
-    public static void onClientClicked() {
+    public static void onClientClicked(String name, String serverIp) {
         isServer = false;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
 
-        new ClientListener(true, HOSTNAME).start();
+        new ClientListener(true, name, serverIp).start();
     }
 
     /**
      * Server methods
      */
 
-    private static synchronized void addHostAsPlayer() {
-        String name = "THE HOST";
-        String ip = "Host's IP Address";
+    private static synchronized void addHostAsPlayer(String name) {
+        String ip = Main.MY_IP_ADDRESS;
         int id = nextPlayerId;
         String color = COLORS.get(id);
 
@@ -311,7 +317,7 @@ public class Main extends Application {
     }
 
     // TODO: handle a case when a client disconnects
-
+    // TODO: remove drawing state when restart
     public static void onServerDisconnected() {
         // Switch to Reconnecting scene
         ReconnectingScene reconnectingScene = new ReconnectingScene();
@@ -333,7 +339,7 @@ public class Main extends Application {
             listenForClients(expectedClientCount);
         } else {
             // Other clients wait for new server to setup
-            new ClientListener(false, state.getPlayers().get(1).getIp()).start();
+            new ClientListener(false, currentPlayer.getName(),state.getPlayers().get(1).getIp()).start();
         }
     }
 

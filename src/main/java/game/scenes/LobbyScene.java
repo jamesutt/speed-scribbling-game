@@ -27,7 +27,13 @@ public class LobbyScene extends Scene {
 
         VBox layout = new VBox(30);
         layout.setAlignment(Pos.CENTER);
-        layout.getChildren().addAll(playerLabel1, playerLabel2, playerLabel3, playerLabel4, startButton);
+
+        if (Main.isServer) {
+            layout.getChildren().addAll(playerLabel1, playerLabel2, playerLabel3, playerLabel4, startButton);
+        } else {
+            layout.getChildren().addAll(playerLabel1, playerLabel2, playerLabel3, playerLabel4);
+        }
+
 
         this.setRoot(layout);
     }

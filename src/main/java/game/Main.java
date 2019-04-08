@@ -10,6 +10,12 @@ import game.scenes.MenuScene;
 import game.scenes.ReconnectingScene;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -17,6 +23,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +41,7 @@ public class Main extends Application {
     public static boolean isServer;
     private static LobbyScene lobbyScene;
     private static GameScene gameScene;
-    private static Scene currentScene;
+    private static SceneType currentSceneType;
     private static Player currentPlayer;
 
     // Server variables
@@ -72,7 +79,7 @@ public class Main extends Application {
 
         MenuScene menuScene = new MenuScene();
 
-        currentScene = Scene.LOGIN;
+        currentSceneType = SceneType.LOGIN;
         stage.setScene(menuScene);
         stage.setTitle("Menu");
         stage.show();
@@ -86,7 +93,7 @@ public class Main extends Application {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
-        currentScene = Scene.LOBBY;
+        currentSceneType = SceneType.LOBBY;
 
         state = new GameState(numRows, minPercentage, lineWidth);
 
@@ -117,7 +124,7 @@ public class Main extends Application {
         isServer = false;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
-        currentScene = Scene.LOBBY;
+        currentSceneType = SceneType.LOBBY;
 
         new ClientListener(true, name, serverIp).start();
     }
@@ -160,7 +167,7 @@ public class Main extends Application {
     public static synchronized void onStartClicked() {
         if (isServer) {
             gameScene = new GameScene(state.getNumRows());
-            currentScene = Scene.GAME;
+            currentSceneType = SceneType.GAME;
             stage.setScene(gameScene);
 
             StartGameMessage startGameMessage = new StartGameMessage();
@@ -252,7 +259,7 @@ public class Main extends Application {
                 broadcastState();
 
                 if (clientCount == expectedClientCount) {
-                    currentScene = Scene.GAME;
+                    currentSceneType = SceneType.GAME;
 
                     Platform.runLater(() -> {
                         stage.setScene(gameScene);
@@ -284,7 +291,7 @@ public class Main extends Application {
             }
             case START_GAME: {
                 gameScene = new GameScene(state.getNumRows());
-                currentScene = Scene.GAME;
+                currentSceneType = SceneType.GAME;
 
                 Platform.runLater(() -> {
                     stage.setScene(gameScene);
@@ -292,7 +299,7 @@ public class Main extends Application {
                 break;
             }
             case RESUME_GAME: {
-                currentScene = Scene.GAME;
+                currentSceneType = SceneType.GAME;
                 gameScene.updateUI(Main.state);
 
                 Platform.runLater(() -> {
@@ -305,9 +312,9 @@ public class Main extends Application {
                 UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
                 Main.state = updateStateMessage.getState();
 
-                if (currentScene.equals(Scene.LOBBY)) {
+                if (currentSceneType.equals(SceneType.LOBBY)) {
                     lobbyScene.updateUI(Main.state);
-                } else if (currentScene.equals(Scene.GAME)) {
+                } else if (currentSceneType.equals(SceneType.GAME)) {
                     gameScene.updateUI(Main.state);
                 }
                 break;
@@ -320,7 +327,7 @@ public class Main extends Application {
     public static void onServerDisconnected() {
         // Switch to Reconnecting scene
         ReconnectingScene reconnectingScene = new ReconnectingScene();
-        currentScene = Scene.RECONNECTING;
+        currentSceneType = SceneType.RECONNECTING;
 
         Platform.runLater(() -> {
             stage.setScene(reconnectingScene);
@@ -380,6 +387,7 @@ public class Main extends Application {
     public static synchronized void onBoxFilled(int row, int column) {
         if (isServer) {
             state.fillBox(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+            gameScene.updateUI(Main.state);
             broadcastState();
         } else {
             try {

@@ -101,7 +101,7 @@ public class MenuScene extends Scene {
         ChoiceBox rowsChoiceBox = new ChoiceBox();
         rowsChoiceBox.setLayoutX(160);
         rowsChoiceBox.setLayoutY(250 - 5);
-        rowsChoiceBox.setItems(FXCollections.observableArrayList(4, 8, 12));
+        rowsChoiceBox.setItems(FXCollections.observableArrayList(2, 4, 8, 12));
 
         Button createButton = new Button("Create");
         createButton.setLayoutX(134);

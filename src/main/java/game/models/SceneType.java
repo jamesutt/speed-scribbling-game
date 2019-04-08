@@ -1,6 +1,6 @@
 package game.models;
 
-public enum Scene {
+public enum SceneType {
     LOGIN,
     LOBBY,
     GAME,

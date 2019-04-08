@@ -8,6 +8,7 @@ import game.views.BoxView;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -18,9 +19,12 @@ import java.util.ArrayList;
 public class GameScene extends Scene {
 
     ArrayList<BoxView> boxViews = new ArrayList<>();
+    Label label = new Label();
 
     public GameScene(int numRows) {
         super(new VBox());
+
+        label.setStyle("-fx-label-padding: 20;");
 
         GridPane grid = new GridPane();
         grid.setHgap(5);
@@ -37,7 +41,7 @@ public class GameScene extends Scene {
 
         VBox layout = new VBox(30);
         layout.setAlignment(Pos.CENTER);
-        layout.getChildren().addAll(grid);
+        layout.getChildren().addAll(grid, label);
 
         this.setRoot(layout);
     }
@@ -69,6 +73,8 @@ public class GameScene extends Scene {
                     boxViews.get(i).forceFill(boxColor);
                 }
             }
+
+            label.setText(state.getWinnerText());
         });
     }
 

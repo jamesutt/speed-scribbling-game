@@ -192,108 +192,110 @@ public class Main extends Application {
 
     public static synchronized void onMessageReceivedFromClient(Message message, ObjectOutputStream writer) {
         switch (message.getType()) {
-        case REQUEST_CONNECTION: {
-            RequestConnectionMessage requestConnectionMessage = (RequestConnectionMessage) message;
-            String name = requestConnectionMessage.getName();
-            String ip = requestConnectionMessage.getIp();
-            int id = nextPlayerId;
+            case REQUEST_CONNECTION: {
+                RequestConnectionMessage requestConnectionMessage = (RequestConnectionMessage) message;
+                String name = requestConnectionMessage.getName();
+                String ip = requestConnectionMessage.getIp();
+                int id = nextPlayerId;
 
-            String color = COLORS.get(id);
+                String color = COLORS.get(id);
 
-            Player player = new Player(id, name, ip, color);
-            state.addPlayer(player);
-            serverWriters.add(writer);
+                Player player = new Player(id, name, ip, color);
+                state.addPlayer(player);
+                serverWriters.add(writer);
 
-            try {
-                ConfirmConnectionMessage confirmConnectionMessage = new ConfirmConnectionMessage(player);
-                writer.writeObject(confirmConnectionMessage);
-            } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    ConfirmConnectionMessage confirmConnectionMessage = new ConfirmConnectionMessage(player);
+                    writer.writeObject(confirmConnectionMessage);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                lobbyScene.updateUI(Main.state);
+                broadcastState();
+                nextPlayerId++;
+                break;
             }
+            case REQUEST_BOX_RESET: {
+                // TODO: Might need to check if box is free
+                RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
+                int requestBoxRow = requestBoxResetMessage.getRow();
+                int requestBoxColumn = requestBoxResetMessage.getColumn();
 
-            lobbyScene.updateUI(Main.state);
-            broadcastState();
-            nextPlayerId++;
-            break;
-        }
-        case REQUEST_BOX_RESET: {
-            // TODO: Might need to check if box is free
-            RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
-            int requestBoxRow = requestBoxResetMessage.getRow();
-            int requestBoxColumn = requestBoxResetMessage.getColumn();
-
-            state.resetBox(requestBoxRow, requestBoxColumn);
-            gameScene.updateUI(Main.state);
-            broadcastState();
-
-            break;
-        }
-        case REQUEST_BOX_FILLED: {
-            RequestBoxFilledMessage requestBoxFilledMessage = (RequestBoxFilledMessage) message;
-            int requestBoxRow = requestBoxFilledMessage.getRow();
-            int requestBoxColumn = requestBoxFilledMessage.getColumn();
-            int requestOwnerId = requestBoxFilledMessage.getOwnerId();
-            String requestBoxColorString = requestBoxFilledMessage.getBoxColorString();
-
-            Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
-            int boxOwnerId = box.getOwnerId();
-            BoxStatus boxStatus = box.getStatus();
-
-            if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId == requestOwnerId)) {
-                state.fillBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                state.resetBox(requestBoxRow, requestBoxColumn);
                 gameScene.updateUI(Main.state);
                 broadcastState();
+
+                break;
             }
+            case REQUEST_BOX_FILLED: {
+                RequestBoxFilledMessage requestBoxFilledMessage = (RequestBoxFilledMessage) message;
+                int requestBoxRow = requestBoxFilledMessage.getRow();
+                int requestBoxColumn = requestBoxFilledMessage.getColumn();
+                int requestOwnerId = requestBoxFilledMessage.getOwnerId();
+                String requestBoxColorString = requestBoxFilledMessage.getBoxColorString();
 
-            break;
-        }
-        case REQUEST_BOX_RESERVED: {
-            RequestBoxReservedMessage requestBoxReservedMessage = (RequestBoxReservedMessage) message;
-            int requestBoxRow = requestBoxReservedMessage.getRow();
-            int requestBoxColumn = requestBoxReservedMessage.getColumn();
-            int requestOwnerId = requestBoxReservedMessage.getOwnerId();
-            String requestBoxColorString = requestBoxReservedMessage.getBoxColorString();
+                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+                int boxOwnerId = box.getOwnerId();
+                BoxStatus boxStatus = box.getStatus();
 
-            Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
-            int boxOwnerId = box.getOwnerId();
-            BoxStatus boxStatus = box.getStatus();
+                if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId == requestOwnerId)) {
+                    state.fillBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                    gameScene.updateUI(Main.state);
+                    broadcastState();
+                }
 
-            if (boxStatus.equals(BoxStatus.FREE)) {
-                state.reserveBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                break;
+            }
+            case REQUEST_BOX_RESERVED: {
+                RequestBoxReservedMessage requestBoxReservedMessage = (RequestBoxReservedMessage) message;
+                int requestBoxRow = requestBoxReservedMessage.getRow();
+                int requestBoxColumn = requestBoxReservedMessage.getColumn();
+                int requestOwnerId = requestBoxReservedMessage.getOwnerId();
+                String requestBoxColorString = requestBoxReservedMessage.getBoxColorString();
+
+                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+                int boxOwnerId = box.getOwnerId();
+                BoxStatus boxStatus = box.getStatus();
+
+                if (boxStatus.equals(BoxStatus.FREE)) {
+                    state.reserveBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
+                    gameScene.updateUI(Main.state);
+                    broadcastState();
+                }
+
+                break;
+            }
+            case RECONNECT: {
+                // TODO: handle a case when there's only one player remaining
+                clientCount++;
+                serverWriters.add(writer);
+
+                broadcastState();
+
+                if (clientCount == expectedClientCount) {
+                    currentSceneType = SceneType.GAME;
+
+                    Platform.runLater(() -> {
+                        stage.setScene(gameScene);
+                    });
+
+                    ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
+                    broadcastMessage(resumeGameMessage);
+                }
+                break;
+            }
+            case CLIENT_DISCONNECT: {
+                ClientDisconnectMessage clientDisconnectMessage = (ClientDisconnectMessage) message;
+                Player disconnectedPlayer = clientDisconnectMessage.getDisconnectedPlayer();
+
+                state.getPlayers().removeIf(player -> player.getId() == disconnectedPlayer.getId());
+                serverWriters.remove(writer);
+
                 gameScene.updateUI(Main.state);
                 broadcastState();
+                break;
             }
-
-            break;
-        }
-        case RECONNECT: {
-            // TODO: handle a case when there's only one player remaining
-            clientCount++;
-            serverWriters.add(writer);
-
-            broadcastState();
-
-            if (clientCount == expectedClientCount) {
-                currentSceneType = SceneType.GAME;
-
-                Platform.runLater(() -> {
-                    stage.setScene(gameScene);
-                });
-
-                ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
-                broadcastMessage(resumeGameMessage);
-            }
-        }
-        case CLIENT_DISCONNECT: {
-            ClientDisconnectMessage clientDisconnectMessage = (ClientDisconnectMessage) message;
-            Player disconnectedPlayer = clientDisconnectMessage.getDisconnectedPlayer();
-
-            state.getPlayers().removeIf(player -> player.getId() == disconnectedPlayer.getId());
-            serverWriters.remove(writer);
-
-            gameScene.updateUI(Main.state);
-            broadcastState();
-        }
         }
     }
 
@@ -307,43 +309,43 @@ public class Main extends Application {
 
     public static synchronized void onMessageReceivedFromServer(Message message) {
         switch (message.getType()) {
-        case CONFIRM_CONNECTION: {
-            ConfirmConnectionMessage confirmConnectionMessage = (ConfirmConnectionMessage) message;
-            Player player = confirmConnectionMessage.getPlayer();
-            currentPlayer = player;
-            break;
-        }
-        case START_GAME: {
-            gameScene = new GameScene(state.getNumRows());
-            gameScene.updateUI(Main.state);
-            currentSceneType = SceneType.GAME;
-
-            Platform.runLater(() -> {
-                stage.setScene(gameScene);
-            });
-            break;
-        }
-        case RESUME_GAME: {
-            currentSceneType = SceneType.GAME;
-            gameScene.updateUI(Main.state);
-
-            Platform.runLater(() -> {
-                stage.setScene(gameScene);
-            });
-
-            break;
-        }
-        case UPDATE_STATE: {
-            UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
-            Main.state = updateStateMessage.getState();
-
-            if (currentSceneType.equals(SceneType.LOBBY)) {
-                lobbyScene.updateUI(Main.state);
-            } else if (currentSceneType.equals(SceneType.GAME)) {
-                gameScene.updateUI(Main.state);
+            case CONFIRM_CONNECTION: {
+                ConfirmConnectionMessage confirmConnectionMessage = (ConfirmConnectionMessage) message;
+                Player player = confirmConnectionMessage.getPlayer();
+                currentPlayer = player;
+                break;
             }
-            break;
-        }
+            case START_GAME: {
+                gameScene = new GameScene(state.getNumRows());
+                gameScene.updateUI(Main.state);
+                currentSceneType = SceneType.GAME;
+
+                Platform.runLater(() -> {
+                    stage.setScene(gameScene);
+                });
+                break;
+            }
+            case RESUME_GAME: {
+                currentSceneType = SceneType.GAME;
+                gameScene.updateUI(Main.state);
+
+                Platform.runLater(() -> {
+                    stage.setScene(gameScene);
+                });
+
+                break;
+            }
+            case UPDATE_STATE: {
+                UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
+                Main.state = updateStateMessage.getState();
+
+                if (currentSceneType.equals(SceneType.LOBBY)) {
+                    lobbyScene.updateUI(Main.state);
+                } else if (currentSceneType.equals(SceneType.GAME)) {
+                    gameScene.updateUI(Main.state);
+                }
+                break;
+            }
         }
     }
 
@@ -377,6 +379,8 @@ public class Main extends Application {
             isServer = true;
             expectedClientCount = state.getPlayers().size() - 1;
             clientCount = 0;
+
+            gameScene.updateUI(Main.state);
             listenForClients(expectedClientCount);
         } else {
             // Other clients wait for new server to setup

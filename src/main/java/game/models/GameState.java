@@ -134,7 +134,9 @@ public class GameState implements Serializable {
 
             if (count == maxBoxCount) {
                 Player player = getPlayerFromPlayerId(playerId);
-                winners.add(player);
+                if (player != null) {
+                    winners.add(player);
+                }
             }
         }
 

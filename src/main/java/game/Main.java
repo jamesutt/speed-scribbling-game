@@ -106,6 +106,7 @@ public class Main extends Application {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
+        stage.setTitle("Lobby");
         currentSceneType = SceneType.LOBBY;
 
         state = new GameState(numRows, minPercentage, lineWidth);
@@ -137,6 +138,7 @@ public class Main extends Application {
         isServer = false;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
+        stage.setTitle("Lobby");
         currentSceneType = SceneType.LOBBY;
 
         new ClientListener(true, name, serverIp).start();
@@ -182,6 +184,7 @@ public class Main extends Application {
             gameScene = new GameScene(state.getNumRows());
             currentSceneType = SceneType.GAME;
             stage.setScene(gameScene);
+            stage.setTitle("Game");
 
             gameScene.updateUI(Main.state);
 
@@ -278,6 +281,7 @@ public class Main extends Application {
 
                     Platform.runLater(() -> {
                         stage.setScene(gameScene);
+                        stage.setTitle("Game");
                     });
 
                     ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
@@ -322,6 +326,7 @@ public class Main extends Application {
 
                 Platform.runLater(() -> {
                     stage.setScene(gameScene);
+                    stage.setTitle("Game");
                 });
                 break;
             }
@@ -331,6 +336,7 @@ public class Main extends Application {
 
                 Platform.runLater(() -> {
                     stage.setScene(gameScene);
+                    stage.setTitle("Game");
                 });
 
                 break;
@@ -367,6 +373,7 @@ public class Main extends Application {
 
         Platform.runLater(() -> {
             stage.setScene(reconnectingScene);
+            stage.setTitle("Reconnecting");
         });
 
         int previousHostId = state.getPlayers().get(0).getId();

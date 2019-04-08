@@ -75,6 +75,7 @@ public class MenuScene extends Scene {
         numberPlayersChoiceBox.setLayoutX(160);
         numberPlayersChoiceBox.setLayoutY(109 - 5);
         numberPlayersChoiceBox.setItems(FXCollections.observableArrayList(2, 3, 4));
+        numberPlayersChoiceBox.getSelectionModel().select(2);
 
         Label minPercentageLabel = new Label("Min. Percentage");
         minPercentageLabel.setLayoutX(34);
@@ -84,6 +85,7 @@ public class MenuScene extends Scene {
         minPercentageChoiceBox.setLayoutX(160);
         minPercentageChoiceBox.setLayoutY(150 - 5);
         minPercentageChoiceBox.setItems(FXCollections.observableArrayList(25, 50, 75));
+        minPercentageChoiceBox.getSelectionModel().select(0);
 
         Label lineWidthLabel = new Label("Brush Size");
         lineWidthLabel.setLayoutX(34);
@@ -93,6 +95,7 @@ public class MenuScene extends Scene {
         lineWidthChoiceBox.setLayoutX(160);
         lineWidthChoiceBox.setLayoutY(200 - 5);
         lineWidthChoiceBox.setItems(FXCollections.observableArrayList(2, 5, 10));
+        lineWidthChoiceBox.getSelectionModel().select(2);
 
         Label rowsLabel = new Label("Rows");
         rowsLabel.setLayoutX(34);
@@ -102,6 +105,7 @@ public class MenuScene extends Scene {
         rowsChoiceBox.setLayoutX(160);
         rowsChoiceBox.setLayoutY(250 - 5);
         rowsChoiceBox.setItems(FXCollections.observableArrayList(2, 4, 8, 12));
+        rowsChoiceBox.getSelectionModel().select(1);
 
         Button createButton = new Button("Create");
         createButton.setLayoutX(134);

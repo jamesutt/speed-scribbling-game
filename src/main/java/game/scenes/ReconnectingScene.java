@@ -10,7 +10,7 @@ public class ReconnectingScene extends Scene {
     public ReconnectingScene() {
         super(new VBox(), 500, 500);
 
-        Label reconnectingLabel = new Label("Reconnecting...");
+        Label reconnectingLabel = new Label("The server has disconnected. Trying to reconnect ...");
 
         VBox layout = new VBox(30);
         layout.setAlignment(Pos.CENTER);

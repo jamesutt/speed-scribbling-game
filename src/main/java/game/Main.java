@@ -154,13 +154,13 @@ public class Main extends Application {
     }
 
     private static synchronized void broadcastMessage(Message message) {
-        try {
-            for (ObjectOutputStream writer: serverWriters) {
+        for (ObjectOutputStream writer: serverWriters) {
+            try {
                 writer.writeObject(message);
                 writer.reset();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -339,6 +339,7 @@ public class Main extends Application {
         // If the current player is the second in the player list, then become the server
         if (previousHostId + 1 == currentPlayerId) {
             state.getPlayers().remove(0); // Remove previous host from players
+            state.resetReservedBoxes();
             isServer = true;
             expectedClientCount = state.getPlayers().size() - 1;
             clientCount = 0;

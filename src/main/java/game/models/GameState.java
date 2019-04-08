@@ -92,7 +92,7 @@ public class GameState implements Serializable {
         return numRows;
     }
 
-    public boolean areAllBoxesFilled() {
+    private boolean areAllBoxesFilled() {
         for (int i = 0; i < boxes.size(); i++) {
             if (boxes.get(i).getStatus() != BoxStatus.FILLED) {
                 return false;
@@ -102,7 +102,7 @@ public class GameState implements Serializable {
         return true;
     }
 
-    public ArrayList<Player> getWinners() {
+    private ArrayList<Player> getWinners() {
         // key = player id
         // value = number of boxes the player owns
         Map<Integer, Integer> boxCount = new HashMap<Integer, Integer>();
@@ -153,4 +153,13 @@ public class GameState implements Serializable {
     public String getWinnerText() {
         return winnerText;
     }
+
+    public void resetReservedBoxes() {
+        for (int i = 0; i < boxes.size(); i++) {
+            if (boxes.get(i).getStatus() == BoxStatus.RESERVED) {
+                boxes.get(i).reset();
+            }
+        }
+    }
+
 }

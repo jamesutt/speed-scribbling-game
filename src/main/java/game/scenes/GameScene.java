@@ -42,7 +42,7 @@ public class GameScene extends Scene {
 
         VBox layout = new VBox(30);
         layout.setAlignment(Pos.CENTER);
-        layout.getChildren().addAll(grid, winnerLabel, numPlayersLabel);
+        layout.getChildren().addAll(winnerLabel, grid, numPlayersLabel);
 
         this.setRoot(layout);
     }

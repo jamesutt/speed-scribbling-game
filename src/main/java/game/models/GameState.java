@@ -12,7 +12,7 @@ public class GameState implements Serializable {
     private double minPercentage;
     private double lineWidth;
     private int numRows;
-    private String winnerText;
+    private String winnerText; // Text shown in game scene when game ends
 
     public GameState(int numRows, double minPercentage, double lineWidth) {
         this.minPercentage = minPercentage;
@@ -55,6 +55,8 @@ public class GameState implements Serializable {
                 }
 
                 winnerText = "The winners are " + winnerNames;
+            } else {
+                winnerText = "The player who disconnected won the game";
             }
         }
     }

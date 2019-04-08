@@ -85,6 +85,18 @@ public class Main extends Application {
         stage.show();
     }
 
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+
+        if (!isServer) {
+            ClientDisconnectMessage clientDisconnectMessage = new ClientDisconnectMessage(currentPlayer);
+            clientWriter.writeObject(clientDisconnectMessage);
+        }
+
+        stage.close();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -169,6 +181,8 @@ public class Main extends Application {
             gameScene = new GameScene(state.getNumRows());
             currentSceneType = SceneType.GAME;
             stage.setScene(gameScene);
+
+            gameScene.updateUI(Main.state);
 
             StartGameMessage startGameMessage = new StartGameMessage();
             broadcastMessage(startGameMessage);
@@ -269,9 +283,18 @@ public class Main extends Application {
                     broadcastMessage(resumeGameMessage);
                 }
             }
+            case CLIENT_DISCONNECT: {
+                ClientDisconnectMessage clientDisconnectMessage = (ClientDisconnectMessage) message;
+                Player disconnectedPlayer = clientDisconnectMessage.getDisconnectedPlayer();
+
+                state.getPlayers().removeIf(player -> player.getId() == disconnectedPlayer.getId());
+                serverWriters.remove(writer);
+
+                gameScene.updateUI(Main.state);
+                broadcastState();
+            }
         }
     }
-
 
     /**
      * Client methods
@@ -291,6 +314,7 @@ public class Main extends Application {
             }
             case START_GAME: {
                 gameScene = new GameScene(state.getNumRows());
+                gameScene.updateUI(Main.state);
                 currentSceneType = SceneType.GAME;
 
                 Platform.runLater(() -> {
@@ -322,8 +346,6 @@ public class Main extends Application {
         }
     }
 
-    // TODO: handle a case when a client disconnects
-    // TODO: remove drawing state when restart
     public static void onServerDisconnected() {
         // Switch to Reconnecting scene
         ReconnectingScene reconnectingScene = new ReconnectingScene();

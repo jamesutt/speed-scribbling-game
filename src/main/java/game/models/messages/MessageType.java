@@ -9,5 +9,6 @@ public enum MessageType {
     REQUEST_BOX_RESERVED,
     REQUEST_BOX_FILLED,
     RECONNECT,
-    RESUME_GAME
+    RESUME_GAME,
+    CLIENT_DISCONNECT
 }

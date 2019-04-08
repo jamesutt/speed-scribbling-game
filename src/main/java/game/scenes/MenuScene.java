@@ -73,7 +73,7 @@ public class MenuScene extends Scene {
 
         ChoiceBox numberPlayersChoiceBox = new ChoiceBox();
         numberPlayersChoiceBox.setLayoutX(160);
-        numberPlayersChoiceBox.setLayoutY(104);
+        numberPlayersChoiceBox.setLayoutY(109 - 5);
         numberPlayersChoiceBox.setItems(FXCollections.observableArrayList(2, 3, 4));
 
         Label minPercentageLabel = new Label("Min. Percentage");
@@ -82,7 +82,7 @@ public class MenuScene extends Scene {
 
         ChoiceBox minPercentageChoiceBox = new ChoiceBox();
         minPercentageChoiceBox.setLayoutX(160);
-        minPercentageChoiceBox.setLayoutY(150);
+        minPercentageChoiceBox.setLayoutY(150 - 5);
         minPercentageChoiceBox.setItems(FXCollections.observableArrayList(25, 50, 75));
 
         Label lineWidthLabel = new Label("Brush Size");
@@ -91,19 +91,41 @@ public class MenuScene extends Scene {
 
         ChoiceBox lineWidthChoiceBox = new ChoiceBox();
         lineWidthChoiceBox.setLayoutX(160);
-        lineWidthChoiceBox.setLayoutY(200);
+        lineWidthChoiceBox.setLayoutY(200 - 5);
         lineWidthChoiceBox.setItems(FXCollections.observableArrayList(2, 5, 10));
+
+        Label rowsLabel = new Label("Rows");
+        rowsLabel.setLayoutX(34);
+        rowsLabel.setLayoutY(250);
+
+        ChoiceBox rowsChoiceBox = new ChoiceBox();
+        rowsChoiceBox.setLayoutX(160);
+        rowsChoiceBox.setLayoutY(250 - 5);
+        rowsChoiceBox.setItems(FXCollections.observableArrayList(4, 8, 12));
 
         Button createButton = new Button("Create");
         createButton.setLayoutX(134);
-        createButton.setLayoutY(250);
+        createButton.setLayoutY(300);
 
         Label serverYourIpLabel = new Label("Your IP is " + Main.MY_IP_ADDRESS);
         serverYourIpLabel.setLayoutX(95);
-        serverYourIpLabel.setLayoutY(290);
+        serverYourIpLabel.setLayoutY(350);
 
         AnchorPane serverTabContent = new AnchorPane();
-        serverTabContent.getChildren().addAll(serverNameLabel, serverNameTextField, numPlayersLabel, numberPlayersChoiceBox, minPercentageLabel, minPercentageChoiceBox, lineWidthLabel, lineWidthChoiceBox, createButton, serverYourIpLabel);
+        serverTabContent.getChildren().addAll(
+                serverNameLabel,
+                serverNameTextField,
+                numPlayersLabel,
+                numberPlayersChoiceBox,
+                minPercentageLabel,
+                minPercentageChoiceBox,
+                lineWidthLabel,
+                lineWidthChoiceBox,
+                rowsLabel,
+                rowsChoiceBox,
+                createButton,
+                serverYourIpLabel
+        );
 
         Tab serverTab = new Tab();
         serverTab.setClosable(false);
@@ -111,7 +133,13 @@ public class MenuScene extends Scene {
         serverTab.setContent(serverTabContent);
 
         createButton.setOnAction(e -> {
-            Main.onServerClicked(serverNameTextField.getText(), (int) numberPlayersChoiceBox.getValue(), (int) minPercentageChoiceBox.getValue(), (int) lineWidthChoiceBox.getValue());
+            Main.onServerClicked(
+                    serverNameTextField.getText(),
+                    (int) numberPlayersChoiceBox.getValue(),
+                    (int) minPercentageChoiceBox.getValue(),
+                    (int) lineWidthChoiceBox.getValue(),
+                    (int) rowsChoiceBox.getValue()
+            );
         });
 
         /**

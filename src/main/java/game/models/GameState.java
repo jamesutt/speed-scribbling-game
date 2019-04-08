@@ -68,4 +68,8 @@ public class GameState implements Serializable {
     public double getLineWidth() {
         return lineWidth;
     }
+
+    public int getNumRows() {
+        return numRows;
+    }
 }

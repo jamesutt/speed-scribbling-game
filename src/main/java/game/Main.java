@@ -24,7 +24,6 @@ import java.util.List;
 public class Main extends Application {
 
     // Constants
-    public static final int NUM_ROWS = 4;
     public static final int PORT = 8888;
     public static String MY_IP_ADDRESS = "";
     private static final List<String> COLORS = Arrays.asList("#ff6961", "#aec6cf", "#77dd77", "#fcd670");
@@ -83,13 +82,13 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void onServerClicked(String name, int numPlayers, double minPercentage, double lineWidth) {
+    public static void onServerClicked(String name, int numPlayers, double minPercentage, double lineWidth, int numRows) {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
 
-        state = new GameState(NUM_ROWS, minPercentage, lineWidth);
+        state = new GameState(numRows, minPercentage, lineWidth);
 
         addHostAsPlayer(name);
 
@@ -160,7 +159,7 @@ public class Main extends Application {
 
     public static synchronized void onStartClicked() {
         if (isServer) {
-            gameScene = new GameScene(NUM_ROWS);
+            gameScene = new GameScene(state.getNumRows());
             currentScene = Scene.GAME;
             stage.setScene(gameScene);
 
@@ -284,7 +283,7 @@ public class Main extends Application {
                 break;
             }
             case START_GAME: {
-                gameScene = new GameScene(NUM_ROWS);
+                gameScene = new GameScene(state.getNumRows());
                 currentScene = Scene.GAME;
 
                 Platform.runLater(() -> {

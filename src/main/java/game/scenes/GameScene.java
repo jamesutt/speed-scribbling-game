@@ -9,6 +9,7 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
@@ -19,12 +20,12 @@ public class GameScene extends Scene {
     ArrayList<BoxView> boxViews = new ArrayList<>();
 
     public GameScene(int numRows) {
-        super(new VBox(), 500, 500);
+        super(new VBox());
 
         GridPane grid = new GridPane();
         grid.setHgap(5);
         grid.setVgap(5);
-        grid.setStyle("-fx-padding: 10;");
+        grid.setStyle("-fx-padding: 100; -fx-alignment: center;");
 
         for (int row = 0; row < numRows; row++) {
             for (int column = 0; column < numRows; column++) {
@@ -39,6 +40,11 @@ public class GameScene extends Scene {
         layout.getChildren().addAll(grid);
 
         this.setRoot(layout);
+    }
+
+    // Not used. Might be useful in the future.
+    private static int getSceneSize(int rows) {
+        return rows * 52 + (rows - 1) * 5 + 10 * 2 + 100;
     }
 
     public void updateUI(GameState state) {

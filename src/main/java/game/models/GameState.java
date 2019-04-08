@@ -6,9 +6,14 @@ import java.util.ArrayList;
 public class GameState implements Serializable {
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Box> boxes = new ArrayList<>();
+
+    private double minPercentage;
+    private double lineWidth;
     private int numRows;
 
-    public GameState(int numRows) {
+    public GameState(int numRows, double minPercentage, double lineWidth) {
+        this.minPercentage = minPercentage;
+        this.lineWidth = lineWidth;
         this.numRows = numRows;
         for (int i = 0; i < numRows * numRows; i++) {
             boxes.add(new Box());
@@ -56,4 +61,11 @@ public class GameState implements Serializable {
         this.players.add(player);
     }
 
+    public double getMinPercentage() {
+        return minPercentage;
+    }
+
+    public double getLineWidth() {
+        return lineWidth;
+    }
 }

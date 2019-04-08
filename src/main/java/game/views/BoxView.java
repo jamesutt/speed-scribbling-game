@@ -14,14 +14,14 @@ import javafx.scene.paint.Color;
 
 public class BoxView extends StackPane {
 
-    private final double lineWidth = 4;
-    private final double minPercentage = 50;
     private final double boxWidth = 50;
     private final double boxHeight = 50;
     private final Color whiteColor = Color.web("#ffffff");
 
     private int row;
     private int column;
+    private double minPercentage;
+    private double lineWidth;
     private Color currentPlayerColor;
     private int currentPlayerId;
     private Canvas canvas;
@@ -37,6 +37,8 @@ public class BoxView extends StackPane {
 
         this.row = row;
         this.column = column;
+        this.minPercentage = Main.getState().getMinPercentage();
+        this.lineWidth = Main.getState().getLineWidth();
         this.currentPlayerColor = Main.getCurrentPlayer().getColor();
         this.currentPlayerId = Main.getCurrentPlayer().getId();
 
@@ -134,9 +136,11 @@ public class BoxView extends StackPane {
 
     // Puts a cross in the box indicating it's being drawn by some other player
     public void reserve(Color color) {
+        gc.setLineWidth(15); // Temporarily set line width to 15 for the cross
         gc.setStroke(color);
         gc.strokeLine(0, 0, boxWidth, boxHeight);
         gc.strokeLine(0, boxHeight, boxWidth, 0);
+        gc.setLineWidth(lineWidth); // Set line width to original
     }
 
     // Forces the current player to stop drawing and fills the box with given color

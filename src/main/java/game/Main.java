@@ -65,8 +65,6 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         stage = primaryStage;
 
-        state = new GameState(NUM_ROWS);
-
         try {
             MY_IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
@@ -85,11 +83,13 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void onServerClicked(String name, int numPlayers) {
+    public static void onServerClicked(String name, int numPlayers, double minPercentage, double lineWidth) {
         isServer = true;
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
         currentScene = Scene.LOBBY;
+
+        state = new GameState(NUM_ROWS, minPercentage, lineWidth);
 
         addHostAsPlayer(name);
 

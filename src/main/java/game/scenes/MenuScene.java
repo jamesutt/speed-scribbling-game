@@ -76,16 +76,34 @@ public class MenuScene extends Scene {
         numberPlayersChoiceBox.setLayoutY(104);
         numberPlayersChoiceBox.setItems(FXCollections.observableArrayList(2, 3, 4));
 
+        Label minPercentageLabel = new Label("Min. Percentage");
+        minPercentageLabel.setLayoutX(34);
+        minPercentageLabel.setLayoutY(150);
+
+        ChoiceBox minPercentageChoiceBox = new ChoiceBox();
+        minPercentageChoiceBox.setLayoutX(160);
+        minPercentageChoiceBox.setLayoutY(150);
+        minPercentageChoiceBox.setItems(FXCollections.observableArrayList(25, 50, 75));
+
+        Label lineWidthLabel = new Label("Brush Size");
+        lineWidthLabel.setLayoutX(34);
+        lineWidthLabel.setLayoutY(200);
+
+        ChoiceBox lineWidthChoiceBox = new ChoiceBox();
+        lineWidthChoiceBox.setLayoutX(160);
+        lineWidthChoiceBox.setLayoutY(200);
+        lineWidthChoiceBox.setItems(FXCollections.observableArrayList(2, 5, 10));
+
         Button createButton = new Button("Create");
         createButton.setLayoutX(134);
-        createButton.setLayoutY(160);
+        createButton.setLayoutY(250);
 
         Label serverYourIpLabel = new Label("Your IP is " + Main.MY_IP_ADDRESS);
         serverYourIpLabel.setLayoutX(95);
-        serverYourIpLabel.setLayoutY(210);
+        serverYourIpLabel.setLayoutY(290);
 
         AnchorPane serverTabContent = new AnchorPane();
-        serverTabContent.getChildren().addAll(serverNameLabel, serverNameTextField, numPlayersLabel, numberPlayersChoiceBox, createButton, serverYourIpLabel);
+        serverTabContent.getChildren().addAll(serverNameLabel, serverNameTextField, numPlayersLabel, numberPlayersChoiceBox, minPercentageLabel, minPercentageChoiceBox, lineWidthLabel, lineWidthChoiceBox, createButton, serverYourIpLabel);
 
         Tab serverTab = new Tab();
         serverTab.setClosable(false);
@@ -93,7 +111,7 @@ public class MenuScene extends Scene {
         serverTab.setContent(serverTabContent);
 
         createButton.setOnAction(e -> {
-            Main.onServerClicked(serverNameTextField.getText(), (int) numberPlayersChoiceBox.getValue());
+            Main.onServerClicked(serverNameTextField.getText(), (int) numberPlayersChoiceBox.getValue(), (int) minPercentageChoiceBox.getValue(), (int) lineWidthChoiceBox.getValue());
         });
 
         /**

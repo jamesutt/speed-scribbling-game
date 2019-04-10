@@ -14,7 +14,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Random;
 
-public class ClientListener extends Thread  {
+public class ClientListener extends Thread {
     private Socket socket;
     private ObjectInputStream input;
     private ObjectOutputStream output;
@@ -36,23 +36,26 @@ public class ClientListener extends Thread  {
             }
 
             socket = new Socket(serverIp, Main.PORT);
+
+            // creats input and output object streams
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
 
             Main.setClientWriter(output);
 
-            if (newConnection) {
+            if (newConnection) { // request a new connection with a new server
                 String ip = Main.MY_IP_ADDRESS;
                 RequestConnectionMessage requestConnectionMessage = new RequestConnectionMessage(name, ip);
 
                 output.writeObject(requestConnectionMessage);
                 output.flush();
-            } else {
+            } else { // reconnect with an existing server
                 ReconnectMessage reconnectMessage = new ReconnectMessage();
                 output.writeObject(reconnectMessage);
                 output.flush();
             }
 
+            // listen to new messages
             while (socket.isConnected()) {
                 Message message = (Message) input.readObject();
                 Main.onMessageReceivedFromServer(message);

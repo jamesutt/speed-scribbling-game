@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+/* This is the entry point to the game */
 public class Main extends Application {
 
     // Constants
@@ -46,7 +47,8 @@ public class Main extends Application {
 
     // Server variables
     private static HashSet<ObjectOutputStream> serverWriters = new HashSet<>(); // For sending messages to clients
-    private static int nextPlayerId = 0; // Don't need to pass this to new server as no new players can join after the game has started
+    private static int nextPlayerId = 0; // Don't need to pass this to new server as no new players can join after the
+                                         // game has started
 
     // For client that becomes server
     private static int expectedClientCount;
@@ -102,17 +104,23 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void onServerClicked(String name, int numPlayers, double minPercentage, double lineWidth, int numRows) {
+    // when user clicked server in the startup UI
+    public static void onServerClicked(String name, int numPlayers, double minPercentage, double lineWidth,
+            int numRows) {
         isServer = true;
         lobbyScene = new LobbyScene();
+
+        // switch the UI to lobby scene
         stage.setScene(lobbyScene);
         stage.setTitle("Lobby");
         currentSceneType = SceneType.LOBBY;
 
+        // create a brand new games state based on the server configuration
         state = new GameState(numRows, minPercentage, lineWidth);
 
         addHostAsPlayer(name);
 
+        // starts multiple server threads to communicate with clients
         listenForClients(numPlayers - 1);
     }
 
@@ -134,13 +142,17 @@ public class Main extends Application {
         wait.start();
     }
 
+    // This method is invoked when user has clicked on "Client" button at startup UI
     public static void onClientClicked(String name, String serverIp) {
         isServer = false;
+
+        // switch to lobby scene
         lobbyScene = new LobbyScene();
         stage.setScene(lobbyScene);
         stage.setTitle("Lobby");
         currentSceneType = SceneType.LOBBY;
 
+        // start listening to the server
         new ClientListener(true, name, serverIp).start();
     }
 
@@ -193,113 +205,124 @@ public class Main extends Application {
         }
     }
 
+    // This method is invoked every time server recieves a new message from a client
     public static synchronized void onMessageReceivedFromClient(Message message, ObjectOutputStream writer) {
         switch (message.getType()) {
-            case REQUEST_CONNECTION: {
-                RequestConnectionMessage requestConnectionMessage = (RequestConnectionMessage) message;
-                String name = requestConnectionMessage.getName();
-                String ip = requestConnectionMessage.getIp();
-                int id = nextPlayerId;
+        case REQUEST_CONNECTION: {
+            RequestConnectionMessage requestConnectionMessage = (RequestConnectionMessage) message;
+            String name = requestConnectionMessage.getName();
+            String ip = requestConnectionMessage.getIp();
 
-                String color = COLORS.get(id);
+            // picks a id for the client
+            int id = nextPlayerId;
 
-                Player player = new Player(id, name, ip, color);
-                state.addPlayer(player);
-                serverWriters.add(writer);
+            // picks a color for the client
+            String color = COLORS.get(id);
+            Player player = new Player(id, name, ip, color);
+            state.addPlayer(player);
 
-                try {
-                    ConfirmConnectionMessage confirmConnectionMessage = new ConfirmConnectionMessage(player);
-                    writer.writeObject(confirmConnectionMessage);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            // adds writer wihch is an Output stream for the client. This allows host
+            // to send message to the client in Main
+            serverWriters.add(writer);
 
-                lobbyScene.updateUI(Main.state);
-                broadcastState();
-                nextPlayerId++;
-                break;
+            try {
+                // this sends the player object made for the client back to the client
+                ConfirmConnectionMessage confirmConnectionMessage = new ConfirmConnectionMessage(player);
+                writer.writeObject(confirmConnectionMessage);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            case REQUEST_BOX_RESET: {
-                // TODO: Might need to check if box is free
-                RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
-                int requestBoxRow = requestBoxResetMessage.getRow();
-                int requestBoxColumn = requestBoxResetMessage.getColumn();
 
-                state.resetBox(requestBoxRow, requestBoxColumn);
+            lobbyScene.updateUI(Main.state);
+
+            // broad cast its own game state to clients
+            broadcastState();
+            nextPlayerId++;
+            break;
+        }
+        case REQUEST_BOX_RESET: {
+            // TODO: Might need to check if box is free
+            RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
+            int requestBoxRow = requestBoxResetMessage.getRow();
+            int requestBoxColumn = requestBoxResetMessage.getColumn();
+
+            state.resetBox(requestBoxRow, requestBoxColumn);
+            gameScene.updateUI(Main.state);
+            broadcastState();
+
+            break;
+        }
+        case REQUEST_BOX_FILLED: {
+            RequestBoxFilledMessage requestBoxFilledMessage = (RequestBoxFilledMessage) message;
+            int requestBoxRow = requestBoxFilledMessage.getRow();
+            int requestBoxColumn = requestBoxFilledMessage.getColumn();
+            int requestOwnerId = requestBoxFilledMessage.getOwnerId();
+            String requestBoxColorString = requestBoxFilledMessage.getBoxColorString();
+
+            Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+            int boxOwnerId = box.getOwnerId();
+            BoxStatus boxStatus = box.getStatus();
+
+            if (boxStatus.equals(BoxStatus.FREE)
+                    || (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId == requestOwnerId)) {
+                state.fillBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
                 gameScene.updateUI(Main.state);
                 broadcastState();
-
-                break;
             }
-            case REQUEST_BOX_FILLED: {
-                RequestBoxFilledMessage requestBoxFilledMessage = (RequestBoxFilledMessage) message;
-                int requestBoxRow = requestBoxFilledMessage.getRow();
-                int requestBoxColumn = requestBoxFilledMessage.getColumn();
-                int requestOwnerId = requestBoxFilledMessage.getOwnerId();
-                String requestBoxColorString = requestBoxFilledMessage.getBoxColorString();
 
-                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
-                int boxOwnerId = box.getOwnerId();
-                BoxStatus boxStatus = box.getStatus();
+            break;
+        }
+        case REQUEST_BOX_RESERVED: {
+            RequestBoxReservedMessage requestBoxReservedMessage = (RequestBoxReservedMessage) message;
+            int requestBoxRow = requestBoxReservedMessage.getRow();
+            int requestBoxColumn = requestBoxReservedMessage.getColumn();
+            int requestOwnerId = requestBoxReservedMessage.getOwnerId();
+            String requestBoxColorString = requestBoxReservedMessage.getBoxColorString();
 
-                if (boxStatus.equals(BoxStatus.FREE) || (boxStatus.equals(BoxStatus.RESERVED) && boxOwnerId == requestOwnerId)) {
-                    state.fillBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
-                    gameScene.updateUI(Main.state);
-                    broadcastState();
-                }
+            Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
+            int boxOwnerId = box.getOwnerId();
+            BoxStatus boxStatus = box.getStatus();
 
-                break;
-            }
-            case REQUEST_BOX_RESERVED: {
-                RequestBoxReservedMessage requestBoxReservedMessage = (RequestBoxReservedMessage) message;
-                int requestBoxRow = requestBoxReservedMessage.getRow();
-                int requestBoxColumn = requestBoxReservedMessage.getColumn();
-                int requestOwnerId = requestBoxReservedMessage.getOwnerId();
-                String requestBoxColorString = requestBoxReservedMessage.getBoxColorString();
-
-                Box box = Main.getState().getBox(requestBoxRow, requestBoxColumn);
-                int boxOwnerId = box.getOwnerId();
-                BoxStatus boxStatus = box.getStatus();
-
-                if (boxStatus.equals(BoxStatus.FREE)) {
-                    state.reserveBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
-                    gameScene.updateUI(Main.state);
-                    broadcastState();
-                }
-
-                break;
-            }
-            case RECONNECT: {
-                // TODO: handle a case when there's only one player remaining
-                clientCount++;
-                serverWriters.add(writer);
-
-                broadcastState();
-
-                if (clientCount == expectedClientCount) {
-                    currentSceneType = SceneType.GAME;
-
-                    Platform.runLater(() -> {
-                        stage.setScene(gameScene);
-                        stage.setTitle("Game");
-                    });
-
-                    ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
-                    broadcastMessage(resumeGameMessage);
-                }
-                break;
-            }
-            case CLIENT_DISCONNECT: {
-                ClientDisconnectMessage clientDisconnectMessage = (ClientDisconnectMessage) message;
-                Player disconnectedPlayer = clientDisconnectMessage.getDisconnectedPlayer();
-
-                state.getPlayers().removeIf(player -> player.getId() == disconnectedPlayer.getId());
-                serverWriters.remove(writer);
-
+            if (boxStatus.equals(BoxStatus.FREE)) {
+                state.reserveBox(requestBoxRow, requestBoxColumn, requestOwnerId, requestBoxColorString);
                 gameScene.updateUI(Main.state);
                 broadcastState();
-                break;
             }
+
+            break;
+        }
+        case RECONNECT: { // when a client wats to reconnect with a new host (after the old host has
+                          // disconnected)
+            // TODO: handle a case when there's only one player remaining
+            clientCount++;
+            serverWriters.add(writer);
+
+            broadcastState();
+
+            if (clientCount == expectedClientCount) {
+                currentSceneType = SceneType.GAME;
+
+                Platform.runLater(() -> {
+                    stage.setScene(gameScene);
+                    stage.setTitle("Game");
+                });
+
+                ResumeGameMessage resumeGameMessage = new ResumeGameMessage();
+                broadcastMessage(resumeGameMessage);
+            }
+            break;
+        }
+        case CLIENT_DISCONNECT: {
+            ClientDisconnectMessage clientDisconnectMessage = (ClientDisconnectMessage) message;
+            Player disconnectedPlayer = clientDisconnectMessage.getDisconnectedPlayer();
+
+            state.getPlayers().removeIf(player -> player.getId() == disconnectedPlayer.getId());
+            serverWriters.remove(writer);
+
+            gameScene.updateUI(Main.state);
+            broadcastState();
+            break;
+        }
         }
     }
 
@@ -313,48 +336,50 @@ public class Main extends Application {
 
     public static synchronized void onMessageReceivedFromServer(Message message) {
         switch (message.getType()) {
-            case CONFIRM_CONNECTION: {
-                ConfirmConnectionMessage confirmConnectionMessage = (ConfirmConnectionMessage) message;
-                Player player = confirmConnectionMessage.getPlayer();
-                currentPlayer = player;
-                break;
-            }
-            case START_GAME: {
-                gameScene = new GameScene(state.getNumRows());
+        case CONFIRM_CONNECTION: { // when receiving the confirm message from server, this will happen after a
+                                   // client send REQUEST_CONNECTION to server
+            ConfirmConnectionMessage confirmConnectionMessage = (ConfirmConnectionMessage) message;
+            Player player = confirmConnectionMessage.getPlayer();
+            currentPlayer = player;
+            break;
+        }
+        case START_GAME: { // when server clicks the start game button in lobby scene
+            gameScene = new GameScene(state.getNumRows());
+            gameScene.updateUI(Main.state);
+            currentSceneType = SceneType.GAME;
+
+            Platform.runLater(() -> {
+                stage.setScene(gameScene);
+                stage.setTitle("Game");
+            });
+            break;
+        }
+        case RESUME_GAME: { // when a client has become a server
+            currentSceneType = SceneType.GAME;
+            gameScene.updateUI(Main.state);
+
+            Platform.runLater(() -> {
+                stage.setScene(gameScene);
+                stage.setTitle("Game");
+            });
+
+            break;
+        }
+        case UPDATE_STATE: { // when server broadcasts game state to all clients
+            UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
+            Main.state = updateStateMessage.getState();
+
+            if (currentSceneType.equals(SceneType.LOBBY)) {
+                lobbyScene.updateUI(Main.state);
+            } else if (currentSceneType.equals(SceneType.GAME)) {
                 gameScene.updateUI(Main.state);
-                currentSceneType = SceneType.GAME;
-
-                Platform.runLater(() -> {
-                    stage.setScene(gameScene);
-                    stage.setTitle("Game");
-                });
-                break;
             }
-            case RESUME_GAME: {
-                currentSceneType = SceneType.GAME;
-                gameScene.updateUI(Main.state);
-
-                Platform.runLater(() -> {
-                    stage.setScene(gameScene);
-                    stage.setTitle("Game");
-                });
-
-                break;
-            }
-            case UPDATE_STATE: {
-                UpdateStateMessage updateStateMessage = (UpdateStateMessage) message;
-                Main.state = updateStateMessage.getState();
-
-                if (currentSceneType.equals(SceneType.LOBBY)) {
-                    lobbyScene.updateUI(Main.state);
-                } else if (currentSceneType.equals(SceneType.GAME)) {
-                    gameScene.updateUI(Main.state);
-                }
-                break;
-            }
+            break;
+        }
         }
     }
 
+    // This method will be invoked when the server has disconnected
     public static void onServerDisconnected() {
         // This means the current client is the only player left in the game
         if (state.getPlayers().size() == 2) {
@@ -379,10 +404,12 @@ public class Main extends Application {
         int previousHostId = state.getPlayers().get(0).getId();
         int currentPlayerId = currentPlayer.getId();
 
-        // If the current player is the second in the player list, then become the server
+        // If the current player is the second in the player list, then become the
+        // server
         if (previousHostId + 1 == currentPlayerId) {
             state.getPlayers().remove(0); // Remove previous host from players
             state.resetReservedBoxes();
+
             isServer = true;
             expectedClientCount = state.getPlayers().size() - 1;
             clientCount = 0;
@@ -421,7 +448,8 @@ public class Main extends Application {
             broadcastState();
         } else {
             try {
-                RequestBoxReservedMessage requestBoxReservedMessage = new RequestBoxReservedMessage(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+                RequestBoxReservedMessage requestBoxReservedMessage = new RequestBoxReservedMessage(row, column,
+                        currentPlayer.getId(), currentPlayer.getColorString());
                 clientWriter.writeObject(requestBoxReservedMessage);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -437,7 +465,8 @@ public class Main extends Application {
             broadcastState();
         } else {
             try {
-                RequestBoxFilledMessage requestBoxFilledMessage = new RequestBoxFilledMessage(row, column, currentPlayer.getId(), currentPlayer.getColorString());
+                RequestBoxFilledMessage requestBoxFilledMessage = new RequestBoxFilledMessage(row, column,
+                        currentPlayer.getId(), currentPlayer.getColorString());
                 clientWriter.writeObject(requestBoxFilledMessage);
             } catch (IOException e) {
                 e.printStackTrace();

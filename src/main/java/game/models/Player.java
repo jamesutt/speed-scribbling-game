@@ -4,6 +4,10 @@ import javafx.scene.paint.Color;
 
 import java.io.Serializable;
 
+/* Player class contains all the player-specific configuration/information
+* including player's external IP (for connection and fault tolerance), player's
+* name, id, and the color (hex value) that player will use in the game. 
+*/
 public class Player implements Serializable {
     private int id;
     private String name;

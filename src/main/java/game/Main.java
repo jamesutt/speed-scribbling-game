@@ -241,7 +241,6 @@ public class Main extends Application {
             break;
         }
         case REQUEST_BOX_RESET: {
-            // TODO: Might need to check if box is free
             RequestBoxResetMessage requestBoxResetMessage = (RequestBoxResetMessage) message;
             int requestBoxRow = requestBoxResetMessage.getRow();
             int requestBoxColumn = requestBoxResetMessage.getColumn();
@@ -293,7 +292,6 @@ public class Main extends Application {
         }
         case RECONNECT: { // when a client wats to reconnect with a new host (after the old host has
                           // disconnected)
-            // TODO: handle a case when there's only one player remaining
             clientCount++;
             serverWriters.add(writer);
 
